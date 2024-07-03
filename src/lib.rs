@@ -71,20 +71,20 @@ pub struct CacheAsync<K, V> where
 struct Generator<K, V> where 
 K:Hash + Eq + Clone 
 {
-    generator: Box<dyn Fn(&K) -> V>
+    generator: Box<dyn Fn(&K) -> V + 'static + Sync>
 }
 
 struct GeneratorAsync<K, V> where 
     K:Hash + Eq + Clone 
 {
-    generator: Box<dyn Fn(&K) -> V>
+    generator: Box<dyn Fn(&K) -> V + 'static + Sync>
 }
 
 impl <K, V> Cache<K,V> where 
     K:Hash + Eq + Clone 
 {
     /// Create a new cache using the given generator function
-    pub fn new(generator:impl Fn(&K) -> V + 'static) -> Self 
+    pub fn new(generator:impl Fn(&K) -> V + 'static + Sync) -> Self 
         where K: Hash + Eq {
         Cache {
             map: Arc::new(RwLock::new(std::collections::HashMap::new())),
@@ -134,7 +134,7 @@ impl <K, V> CacheAsync<K,V> where
     K:Hash + Eq + Clone 
 {
     /// Create a new cache using the given generator function
-    pub fn new(generator:impl Fn(&K) -> V + 'static) -> Self 
+    pub fn new(generator:impl Fn(&K) -> V + 'static + Sync) -> Self 
         where K: Hash + Eq {
         CacheAsync {
             map: Arc::new(TokioRwLock::new(std::collections::HashMap::new())),
