@@ -2,6 +2,9 @@
 name = "anycache"
 version = "1.0.0"
 edition = "2021"
+license = "Apache-2.0"
+description = "Provides cache with expensive generator function."
+repository = "https://github.com/wushilin/anycache.git"
 
 [dependencies]
 tokio = { version = "1", features = ["full"]}
