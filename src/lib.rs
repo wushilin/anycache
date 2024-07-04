@@ -264,7 +264,6 @@ where
     /// Get the desired converted type from the file
     /// If the file become not readable, it will return the last good copy.
     pub fn get<'a>(&'a self) -> Arc<Option<T>>
-        where T: Clone,
     {
         let result = self.value.read().unwrap();
         let clone = Arc::clone(&*result);
