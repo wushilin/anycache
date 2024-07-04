@@ -247,6 +247,8 @@ where
 
                 if modified != last_modified {
                     let content = Self::read_file(file_path.as_str());
+                    // we won't load the file again no matter what, until it is changed again...
+                    last_modified = modified;
                     match content {
                         Ok(bytes) => {
                             let parsed_value = parser(&bytes);
@@ -255,7 +257,6 @@ where
                                 Some(v) => {
                                     let mut w = value_clone.write().unwrap();
                                     *w = Arc::new(Some(v));
-                                    last_modified = modified;
                                 },
                                 None => {
                                     // parser error - silently ignore
