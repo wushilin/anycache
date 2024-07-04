@@ -213,14 +213,22 @@ where
     /// The code never fails. If the file gone missing, or the file is not readable, the value will be None.
     pub fn new<F>(file_path: &str, parser: F, interval: Duration) -> Self
         where
-        F: Fn(&[u8]) -> T + Send + Sync + 'static,
+        F: Fn(&[u8]) -> Option<T> + Send + Sync + 'static,
     {
         let current_content = Self::read_file(file_path);
 
         // initial loading
         let value = match current_content {
             Ok(content) => {
-                Arc::new(RwLock::new(Arc::new(Some(parser(&content)))))
+                let parsed = parser(&content);
+                match parsed {
+                    Some(v) => {
+                        Arc::new(RwLock::new(Arc::new(Some(v))))
+                    },
+                    None => {
+                        Arc::new(RwLock::new(Arc::new(None)))
+                    }
+                }
             },
             Err(_) => {
                 Arc::new(RwLock::new(Arc::new(None)))
@@ -242,10 +250,17 @@ where
                     match content {
                         Ok(bytes) => {
                             let parsed_value = parser(&bytes);
-                            let mut w = value_clone.write().unwrap();
                         
-                            *w = Arc::new(Some(parsed_value));
-                            last_modified = modified;
+                            match parsed_value {
+                                Some(v) => {
+                                    let mut w = value_clone.write().unwrap();
+                                    *w = Arc::new(Some(v));
+                                    last_modified = modified;
+                                },
+                                None => {
+                                    // parser error - silently ignore
+                                }
+                            }
                         },
                         Err(_) => {
                             // file read error - silently ignore
@@ -317,8 +332,8 @@ mod tests {
 
     #[test]
     fn test_load_file() {
-        fn file_to_string(bytes: &[u8]) -> String {
-            String::from_utf8_lossy(bytes).to_string()
+        fn file_to_string(bytes: &[u8]) -> Option<String> {
+            Some(String::from_utf8_lossy(bytes).to_string())
         }
     
         // Initialize the FromWatchedFile struct
