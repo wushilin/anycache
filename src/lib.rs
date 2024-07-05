@@ -184,6 +184,28 @@ impl <K, V> CacheAsync<K,V> where
 /// When the file changes, the struct will reload the file and update the value in the background.
 /// This struct is useful for reloading configuration files or other files that are read frequently.
 /// It is thread safe. Note: Each FromWatchedFile spawns a new thread to watch the file do not use too many of them!
+/// 
+/// ```
+/// 
+/// // Your load function can return Option<T> where T is the desired type
+/// // If your function returns None, the file will not be reloaded, and the current modified version
+/// // of the file is not retried. Until it is modified again.
+/// fn load_file_from_bytes(bytes: &[u8]) -> Option<String> {
+///     Some(String::from_utf8_lossy(bytes).to_string())
+/// }
+/// 
+/// // Initialize the FromWatchedFile struct
+/// let cfg: FromWatchedFile<String> = FromWatchedFile::new("config.json", load_file_from_bytes, Duration::from_secs(5));
+/// let config = cfg.get();
+/// match config.as_ref() {
+///     Some(c) => {
+///         println!("Config: {}", c);
+///         // Do something with the config
+///         // whenever you call .get(), it is the current version of the config.
+///     },
+///     None => println!("Config not loaded yet"),
+/// }
+/// ```
 pub struct FromWatchedFile<T> {
     value: Arc<RwLock<Arc<Option<T>>>>,
 }
